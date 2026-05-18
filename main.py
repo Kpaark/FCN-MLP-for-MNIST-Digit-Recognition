@@ -65,6 +65,30 @@ class MLP:
         return np.argmax(self.forward(X), axis=1)
 
 
+def accuracy(model: MLP, X: np.ndarray, y: np.ndarray) -> float:
+    return float(np.mean(model.predict(X) == y))
+
+
+def train_epoch(
+    model: MLP,
+    X: np.ndarray,
+    y_oh: np.ndarray,
+    lr: float,
+    batch_size: int,
+) -> float:
+    n = X.shape[0]
+    perm = np.random.permutation(n)
+    losses = []
+    for start in range(0, n, batch_size):
+        idx = perm[start : start + batch_size]
+        xb = X[idx]
+        yb = y_oh[idx]
+        probs = model.forward(xb)
+        losses.append(-np.mean(np.sum(yb * np.log(probs + 1e-12), axis=1)))
+        model.backward(xb, yb, lr)
+    return float(np.mean(losses))
+
+
 def parse_args():
     p = argparse.ArgumentParser(description="NumPy MLP on MNIST")
     p.add_argument("--data", type=str, default="mnist.npz", help="MNIST .npz path")
