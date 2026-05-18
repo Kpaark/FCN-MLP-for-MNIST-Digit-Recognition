@@ -92,6 +92,10 @@ def train_epoch(
 def parse_args():
     p = argparse.ArgumentParser(description="NumPy MLP on MNIST")
     p.add_argument("--data", type=str, default="mnist.npz", help="MNIST .npz path")
+    p.add_argument("--epochs", type=int, default=15)
+    p.add_argument("--lr", type=float, default=0.1)
+    p.add_argument("--hidden", type=int, default=128)
+    p.add_argument("--batch-size", type=int, default=64)
     p.add_argument("--seed", type=int, default=0)
     return p.parse_args()
 
@@ -105,8 +109,31 @@ def main():
         )
 
     X, y = load_mnist(str(data_path))
+    perm = np.random.default_rng(args.seed).permutation(len(y))
+    X, y = X[perm], y[perm]
+
     X_flat = flatten(X)
-    print(f"loaded {len(y)} images, shape {X_flat.shape}, labels 0–9")
+    n_train = 50_000
+    X_train, y_train = X_flat[:n_train], y[:n_train]
+    X_test, y_test = X_flat[n_train:], y[n_train:]
+    y_train_oh = one_hot(y_train)
+
+    model = MLP(hidden_size=args.hidden, seed=args.seed)
+
+    print(f"training MLP: 784 -> {args.hidden} -> 10")
+    for epoch in range(1, args.epochs + 1):
+        loss = train_epoch(model, X_train, y_train_oh, args.lr, args.batch_size)
+        train_acc = accuracy(model, X_train, y_train)
+        test_acc = accuracy(model, X_test, y_test)
+        print(
+            f"epoch {epoch:2d}/{args.epochs}  loss={loss:.4f}  "
+            f"train_acc={train_acc:.4f}  test_acc={test_acc:.4f}"
+        )
+
+    final = accuracy(model, X_test, y_test)
+    print(f"\nfinal held-out accuracy (10k): {final * 100:.2f}%")
+    if final < 0.90:
+        print("below 90% — try more epochs, --hidden 256, or --lr 0.05–0.2.")
 
 
 if __name__ == "__main__":
