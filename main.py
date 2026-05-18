@@ -46,6 +46,24 @@ class MLP:
         self.probs = softmax(self.z2)
         return self.probs
 
+    def backward(self, X: np.ndarray, y_oh: np.ndarray, lr: float) -> None:
+        batch = X.shape[0]
+        dz2 = (self.probs - y_oh) / batch
+        dW2 = self.a1.T @ dz2
+        db2 = dz2.sum(axis=0)
+        da1 = dz2 @ self.W2.T
+        dz1 = da1 * (self.z1 > 0)
+        dW1 = X.T @ dz1
+        db1 = dz1.sum(axis=0)
+
+        self.W2 -= lr * dW2
+        self.b2 -= lr * db2
+        self.W1 -= lr * dW1
+        self.b1 -= lr * db1
+
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        return np.argmax(self.forward(X), axis=1)
+
 
 def parse_args():
     p = argparse.ArgumentParser(description="NumPy MLP on MNIST")
