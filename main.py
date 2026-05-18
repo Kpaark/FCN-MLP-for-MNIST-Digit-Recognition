@@ -1,55 +1,39 @@
-"""Main script for the solution."""
+import argparse
+from pathlib import Path
 
 import numpy as np
-import pandas as pd
-import argparse
-
-import npnn
 
 
-def _get_args():
-    p = argparse.ArgumentParser()
-    p.add_argument("--lr", help="learning rate", type=float, default=0.1)
-    p.add_argument("--opt", help="optimizer", default="SGD")
-    p.add_argument(
-        "--epochs", help="number of epochs to train", type=int, default=20)
-    p.add_argument(
-        "--save_stats", help="Save statistics to file", action="store_true")
-    p.add_argument(
-        "--save_pred", help="Save predictions to file", action="store_true")
-    p.add_argument("--dataset", help="Dataset file", default="mnist.npz")
-    p.add_argument(
-        "--test_dataset", help="Dataset file (test set)",
-        default="mnist_test.npz")
-    p.set_defaults(save_stats=False, save_pred=False)
+def load_mnist(npz_path: str):
+    data = np.load(npz_path)
+    X = data["image"].astype(np.float32) / 255.0
+    y = data["label"].astype(np.int64)
+    return X, y
+
+
+def flatten(X: np.ndarray) -> np.ndarray:
+    return X.reshape(X.shape[0], -1)
+
+
+def parse_args():
+    p = argparse.ArgumentParser(description="NumPy MLP on MNIST")
+    p.add_argument("--data", type=str, default="mnist.npz", help="MNIST .npz path")
+    p.add_argument("--seed", type=int, default=0)
     return p.parse_args()
 
 
-if __name__ == '__main__':
-    args = _get_args()
-    X, y = npnn.load_mnist(args.dataset)
+def main():
+    args = parse_args()
+    data_path = Path(args.data)
+    if not data_path.is_file():
+        raise FileNotFoundError(
+            f"missing {data_path}. put mnist.npz in folder"
+        )
 
-    # TODO
-    p = np.random.permutation(len(y))
-    X = X[p]
-    y = y[p]
+    X, y = load_mnist(str(data_path))
+    X_flat = flatten(X)
+    print(f"loaded {len(y)} images, shape {X_flat.shape}, labels 0–9")
 
-    train = npnn.Dataset(X[:50000], y[:50000], batch_size=32)
-    val = npnn.Dataset(X[50000:], y[50000:], batch_size=32)
-    
-    # Create model (see npnn/model.py)
-    # Train for args.epochs
-    model = None
-    stats = pd.DataFrame()
 
-    # Save statistics to file.
-    # We recommend that you save your results to a file, then plot them
-    # separately, though you can also place your plotting code here.
-    if args.save_stats:
-        stats.to_csv("data/{}_{}.csv".format(args.opt, args.lr))
-
-    # Save predictions.
-    if args.save_pred:
-        X_test, _ = npnn.load_mnist("mnist_test.npz")
-        y_pred = np.argmax(model.forward(X_test), axis=1).astype(np.uint8)
-        np.save("mnist_test_pred.npy", y_pred)
+if __name__ == "__main__":
+    main()

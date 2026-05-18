@@ -38,6 +38,10 @@ data/
 .env
 .env.*
 
+# Local commit staging (not part of the library)
+staged_commits/
+apply_next_commit.sh
+
 # OS / editor
 .DS_Store
 .idea/
