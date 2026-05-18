@@ -15,6 +15,22 @@ def flatten(X: np.ndarray) -> np.ndarray:
     return X.reshape(X.shape[0], -1)
 
 
+def one_hot(y: np.ndarray, num_classes: int = 10) -> np.ndarray:
+    out = np.zeros((y.shape[0], num_classes), dtype=np.float32)
+    out[np.arange(y.shape[0]), y] = 1.0
+    return out
+
+
+def softmax(logits: np.ndarray) -> np.ndarray:
+    shifted = logits - logits.max(axis=1, keepdims=True)
+    exp = np.exp(shifted)
+    return exp / exp.sum(axis=1, keepdims=True)
+
+
+def relu(x: np.ndarray) -> np.ndarray:
+    return np.maximum(0.0, x)
+
+
 def parse_args():
     p = argparse.ArgumentParser(description="NumPy MLP on MNIST")
     p.add_argument("--data", type=str, default="mnist.npz", help="MNIST .npz path")
