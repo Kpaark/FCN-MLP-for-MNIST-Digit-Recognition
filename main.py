@@ -31,6 +31,22 @@ def relu(x: np.ndarray) -> np.ndarray:
     return np.maximum(0.0, x)
 
 
+class MLP:
+    def __init__(self, hidden_size: int = 128, seed: int = 0):
+        rng = np.random.default_rng(seed)
+        self.W1 = rng.normal(0, np.sqrt(2.0 / 784), (784, hidden_size)).astype(np.float32)
+        self.b1 = np.zeros(hidden_size, dtype=np.float32)
+        self.W2 = rng.normal(0, np.sqrt(2.0 / hidden_size), (hidden_size, 10)).astype(np.float32)
+        self.b2 = np.zeros(10, dtype=np.float32)
+
+    def forward(self, X: np.ndarray) -> np.ndarray:
+        self.z1 = X @ self.W1 + self.b1
+        self.a1 = relu(self.z1)
+        self.z2 = self.a1 @ self.W2 + self.b2
+        self.probs = softmax(self.z2)
+        return self.probs
+
+
 def parse_args():
     p = argparse.ArgumentParser(description="NumPy MLP on MNIST")
     p.add_argument("--data", type=str, default="mnist.npz", help="MNIST .npz path")
