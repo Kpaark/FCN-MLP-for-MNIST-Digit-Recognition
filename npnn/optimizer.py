@@ -1,4 +1,4 @@
-"""18-661 HW5 Optimization Policies."""
+"""18-661 Optimization Policies."""
 
 import numpy as np
 
